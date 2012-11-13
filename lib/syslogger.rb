@@ -115,10 +115,32 @@ class Syslogger
   # Borrowed from SyslogLogger.
   def clean(message)
     message = message.to_s.dup
+    message = truncate_syslog_message(message)
     message.strip! # remove whitespace
     message.gsub!(/\n/, '\\n') # escape newlines
     message.gsub!(/%/, '%%') # syslog(3) freaks on % (printf)
     message.gsub!(/\e\[[^m]*m/, '') # remove useless ansi color codes
     message
   end
+
+  #Borrowed from syslog_protocol
+  def truncate_syslog_message(data)
+    max_size = 1024
+    if string_bytesize(data) > max_size
+      data = data.slice(0, max_size)
+      while string_bytesize(data) > max_size
+        data = data.slice(0, data.length - 1)
+      end
+    end
+  end
+
+  def string_bytesize(string)
+    #Handle different ruby versions
+    if string.respond_to?(:bytesize)
+      string.bytesize
+    else
+      string.length
+    end
+  end
+
 end
